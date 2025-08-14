@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chest X-Ray Analyzer</title>
+    <title>Medical DICOM Chest X-Ray Analyzer</title>
     <style>
         * {
             margin: 0;
@@ -13,7 +13,7 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2d5a87 0%, #4a6fa5 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -25,7 +25,7 @@
             background: white;
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 900px;
+            max-width: 1200px;
             width: 100%;
             padding: 40px;
         }
@@ -36,7 +36,7 @@
         }
         
         h1 {
-            color: #333;
+            color: #2d5a87;
             font-size: 2.5em;
             margin-bottom: 10px;
         }
@@ -44,26 +44,70 @@
         .subtitle {
             color: #666;
             font-size: 1.1em;
+            margin-bottom: 15px;
+        }
+        
+        .format-info {
+            background: #e8f4fd;
+            border: 1px solid #bee3f8;
+            color: #2b6cb0;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+        
+        .upload-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 5px;
+        }
+        
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .tab.active {
+            background: #2d5a87;
+            color: white;
+            box-shadow: 0 2px 10px rgba(45, 90, 135, 0.3);
+        }
+        
+        .tab:not(.active) {
+            color: #666;
+        }
+        
+        .tab:not(.active):hover {
+            background: #e2e8f0;
         }
         
         .upload-area {
-            border: 3px dashed #667eea;
+            border: 3px dashed #2d5a87;
             border-radius: 15px;
             padding: 60px 20px;
             text-align: center;
             transition: all 0.3s ease;
             cursor: pointer;
             background: #f8f9ff;
+            margin-bottom: 20px;
         }
         
         .upload-area.dragover {
             background: #e8eaff;
-            border-color: #4c51bf;
+            border-color: #1a365d;
         }
         
         .upload-icon {
             font-size: 60px;
-            color: #667eea;
+            color: #2d5a87;
             margin-bottom: 20px;
         }
         
@@ -76,6 +120,31 @@
         .upload-subtext {
             color: #999;
             font-size: 0.9em;
+        }
+        
+        .dicom-features {
+            background: #f0f8ff;
+            border: 1px solid #bee3f8;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-size: 0.85em;
+            color: #2b6cb0;
+        }
+        
+        .dicom-features ul {
+            list-style: none;
+            margin: 0;
+        }
+        
+        .dicom-features li {
+            margin-bottom: 5px;
+        }
+        
+        .dicom-features li:before {
+            content: "✓ ";
+            color: #48bb78;
+            font-weight: bold;
         }
         
         input[type="file"] {
@@ -103,6 +172,36 @@
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
         }
         
+        .metadata-section {
+            background: #f8f9ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            font-size: 0.85em;
+        }
+        
+        .metadata-title {
+            font-weight: 600;
+            color: #2d5a87;
+            margin-bottom: 10px;
+        }
+        
+        .metadata-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 5px 15px;
+            font-size: 0.8em;
+        }
+        
+        .metadata-label {
+            font-weight: 500;
+            color: #666;
+        }
+        
+        .metadata-value {
+            color: #333;
+        }
+        
         .results {
             background: #f8f9ff;
             border-radius: 10px;
@@ -111,32 +210,114 @@
         
         .result-title {
             font-size: 1.3em;
-            color: #333;
+            color: #2d5a87;
             margin-bottom: 15px;
             font-weight: 600;
+        }
+        
+        .medical-summary {
+            background: #fff;
+            border-left: 4px solid #2d5a87;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 0 8px 8px 0;
         }
         
         .finding {
             background: white;
             border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 10px;
-            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-left: 4px solid #e53e3e;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .finding.low-priority {
+            border-left-color: #38a169;
+        }
+        
+        .finding.moderate-priority {
+            border-left-color: #d69e2e;
+        }
+        
+        .finding.high-priority {
+            border-left-color: #e53e3e;
         }
         
         .finding-name {
             font-weight: 600;
             color: #333;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        
+        .finding-details {
+            display: grid;
+            grid-template-columns: auto auto 1fr;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 8px;
         }
         
         .confidence {
             display: inline-block;
-            background: #667eea;
+            background: #2d5a87;
             color: white;
-            padding: 2px 8px;
+            padding: 4px 8px;
             border-radius: 4px;
             font-size: 0.85em;
+            font-weight: 500;
+        }
+        
+        .severity {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+        
+        .severity.critical {
+            background: #fed7d7;
+            color: #c53030;
+        }
+        
+        .severity.high {
+            background: #feebc8;
+            color: #c05621;
+        }
+        
+        .severity.moderate {
+            background: #fefcbf;
+            color: #975a16;
+        }
+        
+        .clinical-significance {
+            font-size: 0.85em;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .recommendations {
+            background: #f0fff4;
+            border: 1px solid #9ae6b4;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .recommendations h4 {
+            color: #276749;
+            margin-bottom: 10px;
+        }
+        
+        .recommendations ul {
+            margin: 0;
+            color: #2f855a;
+        }
+        
+        .recommendations li {
+            margin-bottom: 5px;
         }
         
         .normal {
@@ -167,7 +348,7 @@
         
         .spinner {
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
+            border-top: 4px solid #2d5a87;
             border-radius: 50%;
             width: 50px;
             height: 50px;
@@ -181,7 +362,7 @@
         }
         
         .button {
-            background: #667eea;
+            background: #2d5a87;
             color: white;
             border: none;
             padding: 12px 30px;
@@ -193,12 +374,177 @@
         }
         
         .button:hover {
-            background: #5a67d8;
+            background: #1a365d;
+        }
+        
+        .processing-notes {
+            background: #e6fffa;
+            border: 1px solid #81e6d9;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 15px;
+            font-size: 0.8em;
+            color: #234e52;
+        }
+        
+        .database-view {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .database-view.active {
+            display: block;
+        }
+        
+        .database-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: #f8f9ff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2d5a87;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .database-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .db-button {
+            background: #2d5a87;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.3s;
+        }
+        
+        .db-button:hover {
+            background: #1a365d;
+        }
+        
+        .db-button.active {
+            background: #48bb78;
+        }
+        
+        .analyses-list {
+            background: #f8f9ff;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .analysis-item {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .analysis-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
+        }
+        
+        .analysis-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .analysis-id {
+            font-weight: bold;
+            color: #2d5a87;
+            font-size: 0.9em;
+        }
+        
+        .analysis-date {
+            color: #666;
+            font-size: 0.8em;
+        }
+        
+        .analysis-type {
+            display: inline-block;
+            background: #e2e8f0;
+            color: #4a5568;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75em;
+        }
+        
+        .analysis-type.dicom {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        
+        .analysis-summary {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 8px;
+        }
+        
+        .analysis-findings {
+            display: flex;
+            gap: 5px;
+            margin-top: 8px;
+        }
+        
+        .finding-badge {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7em;
+        }
+        
+        .finding-badge.normal {
+            background: #c6f6d5;
+            color: #22543d;
         }
         
         @media (max-width: 768px) {
             .preview-section {
                 grid-template-columns: 1fr;
+            }
+            
+            .finding-details {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .database-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .database-controls {
+                flex-direction: column;
             }
         }
     </style>
@@ -206,36 +552,87 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🫁 AI Chest X-Ray Analyzer</h1>
-            <p class="subtitle">Upload an X-ray image for instant AI-powered analysis</p>
+            <h1>🏥 Medical DICOM X-Ray Analyzer</h1>
+            <p class="subtitle">Professional-grade AI analysis for medical chest X-ray imaging</p>
+            <div class="format-info">
+                <strong>Optimized for DICOM medical imaging format</strong> - Upload .dcm files for full medical metadata analysis
+            </div>
+        </div>
+        
+        <div class="upload-tabs">
+            <div class="tab active" data-format="dicom">
+                📄 DICOM (.dcm) - RECOMMENDED
+            </div>
+            <div class="tab" data-format="image">
+                🖼️ Image (JPEG/PNG) - Legacy
+            </div>
+            <div class="tab" data-format="database">
+                🗃️ Database - View Results
+            </div>
         </div>
         
         <div class="upload-area" id="uploadArea">
-            <div class="upload-icon">📤</div>
-            <div class="upload-text">Drop your X-ray image here</div>
-            <div class="upload-subtext">or click to browse (PNG, JPG, JPEG)</div>
-            <input type="file" id="fileInput" accept="image/*">
+            <div class="upload-icon">🩺</div>
+            <div class="upload-text" id="uploadText">Drop your DICOM file here</div>
+            <div class="upload-subtext" id="uploadSubtext">or click to browse (.dcm files)</div>
+            <input type="file" id="fileInput" accept=".dcm">
+            
+            <div class="dicom-features" id="dicomFeatures">
+                <strong>DICOM format provides:</strong>
+                <ul>
+                    <li>16-bit medical image quality (vs 8-bit JPEG)</li>
+                    <li>Patient and study metadata</li>
+                    <li>Acquisition parameters (kVp, exposure)</li>
+                    <li>Medical windowing/leveling</li>
+                    <li>Hospital-standard format</li>
+                </ul>
+            </div>
         </div>
         
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <p>Analyzing your X-ray image...</p>
+            <p id="loadingText">Analyzing medical imaging data...</p>
         </div>
         
         <div class="preview-section" id="previewSection">
             <div class="image-preview">
-                <h3 style="margin-bottom: 15px;">Uploaded X-Ray</h3>
-                <img id="previewImage" class="preview-image" alt="X-ray preview">
+                <h3 style="margin-bottom: 15px;" id="imageTitle">Medical Image</h3>
+                <img id="previewImage" class="preview-image" alt="Medical image preview">
+                
+                <div class="metadata-section" id="metadataSection" style="display: none;">
+                    <div class="metadata-title">DICOM Metadata</div>
+                    <div class="metadata-grid" id="metadataGrid"></div>
+                </div>
             </div>
             
             <div class="results" id="results">
-                <div class="result-title">Analysis Results</div>
+                <div class="result-title">Medical Analysis Results</div>
                 <div id="resultsContent"></div>
             </div>
         </div>
         
+        <!-- Database View Section -->
+        <div class="database-view" id="databaseView">
+            <h3 style="margin-bottom: 20px; color: #2d5a87;">📊 Medical Analysis Database</h3>
+            
+            <div class="database-stats" id="databaseStats">
+                <!-- Statistics cards will be populated by JavaScript -->
+            </div>
+            
+            <div class="database-controls">
+                <button class="db-button active" data-view="recent">Recent Analyses</button>
+                <button class="db-button" data-view="dicom">DICOM Only</button>
+                <button class="db-button" data-view="findings">With Findings</button>
+                <button class="db-button" data-view="refresh">🔄 Refresh</button>
+            </div>
+            
+            <div class="analyses-list" id="analysesList">
+                <!-- Analysis results will be populated by JavaScript -->
+            </div>
+        </div>
+        
         <div class="warning">
-            ⚠️ <strong>Important:</strong> This is a prototype AI tool for educational purposes. Always consult with qualified healthcare professionals for medical advice.
+            ⚠️ <strong>Medical Disclaimer:</strong> This is a research prototype for educational purposes only. NOT approved for clinical diagnosis. Always consult qualified healthcare professionals for medical evaluation.
         </div>
     </div>
     
@@ -245,7 +642,53 @@
         const previewSection = document.getElementById('previewSection');
         const previewImage = document.getElementById('previewImage');
         const loading = document.getElementById('loading');
+        const loadingText = document.getElementById('loadingText');
         const resultsContent = document.getElementById('resultsContent');
+        const uploadText = document.getElementById('uploadText');
+        const uploadSubtext = document.getElementById('uploadSubtext');
+        const dicomFeatures = document.getElementById('dicomFeatures');
+        const imageTitle = document.getElementById('imageTitle');
+        const metadataSection = document.getElementById('metadataSection');
+        const metadataGrid = document.getElementById('metadataGrid');
+        const databaseView = document.getElementById('databaseView');
+        const databaseStats = document.getElementById('databaseStats');
+        const analysesList = document.getElementById('analysesList');
+        
+        let currentFormat = 'dicom';
+        
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                currentFormat = tab.getAttribute('data-format');
+                updateUploadArea();
+            });
+        });
+        
+        function updateUploadArea() {
+            // Hide all sections first
+            uploadArea.style.display = 'block';
+            databaseView.classList.remove('active');
+            previewSection.classList.remove('active');
+            
+            if (currentFormat === 'dicom') {
+                uploadText.textContent = 'Drop your DICOM file here';
+                uploadSubtext.textContent = 'or click to browse (.dcm files)';
+                fileInput.accept = '.dcm';
+                dicomFeatures.style.display = 'block';
+            } else if (currentFormat === 'image') {
+                uploadText.textContent = 'Drop your X-ray image here';
+                uploadSubtext.textContent = 'or click to browse (PNG, JPG, JPEG)';
+                fileInput.accept = 'image/*';
+                dicomFeatures.style.display = 'none';
+            } else if (currentFormat === 'database') {
+                uploadArea.style.display = 'none';
+                databaseView.classList.add('active');
+                loadDatabaseView();
+            }
+        }
         
         uploadArea.addEventListener('click', () => fileInput.click());
         
@@ -275,87 +718,353 @@
         });
         
         async function handleFile(file) {
-            if (!file.type.startsWith('image/')) {
-                alert('Please upload an image file');
+            const isDicom = file.name.toLowerCase().endsWith('.dcm');
+            const isImage = file.type.startsWith('image/');
+            
+            if (currentFormat === 'dicom' && !isDicom) {
+                alert('Please upload a DICOM (.dcm) file or switch to Image tab');
                 return;
             }
             
+            if (currentFormat === 'image' && !isImage) {
+                alert('Please upload an image file (JPEG/PNG) or switch to DICOM tab');
+                return;
+            }
+            
+            // Set preview image
             const reader = new FileReader();
             reader.onload = (e) => {
-                previewImage.src = e.target.result;
+                if (isImage) {
+                    previewImage.src = e.target.result;
+                }
             };
-            reader.readAsDataURL(file);
+            
+            if (isImage) {
+                reader.readAsDataURL(file);
+            }
             
             loading.style.display = 'block';
+            loadingText.textContent = isDicom ? 
+                'Processing DICOM medical data...' : 
+                'Analyzing medical image...';
             previewSection.classList.remove('active');
             
             const formData = new FormData();
             formData.append('file', file);
             
+            // Choose endpoint based on file type
+            const endpoint = isDicom ? 
+                'http://localhost:8000/analyze/dicom' : 
+                'http://localhost:8000/analyze/image';
+            
             try {
-                const response = await fetch('http://localhost:8000/analyze', {
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     body: formData
                 });
                 
                 if (!response.ok) {
-                    throw new Error('Analysis failed');
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.detail || 'Analysis failed');
                 }
                 
                 const data = await response.json();
-                displayResults(data);
+                displayResults(data, isDicom);
                 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to analyze image. Please make sure the backend server is running.');
+                alert(`Failed to analyze file: ${error.message}. Please check that the backend server is running.`);
             } finally {
                 loading.style.display = 'none';
             }
         }
         
-        function displayResults(data) {
+        function displayResults(data, isDicom) {
             let html = '';
             
-            if (data.findings.length === 0) {
-                html += `<div class="normal">✅ ${data.summary}</div>`;
+            // Set image preview for DICOM (comes from server)
+            if (isDicom && data.image_preview) {
+                previewImage.src = data.image_preview;
+                imageTitle.textContent = `DICOM Image (${data.dicom_metadata?.modality || 'Medical'})`;
             } else {
-                html += `<div style="margin-bottom: 15px; color: #e53e3e; font-weight: 600;">
-                    ⚠️ ${data.summary}
+                imageTitle.textContent = 'X-Ray Image';
+            }
+            
+            // Display DICOM metadata if available
+            if (data.dicom_metadata) {
+                displayDicomMetadata(data.dicom_metadata);
+            } else {
+                metadataSection.style.display = 'none';
+            }
+            
+            // Medical summary
+            if (data.medical_summary) {
+                html += `<div class="medical-summary">
+                    <strong>Medical Summary:</strong><br>
+                    ${data.medical_summary}
                 </div>`;
+            }
+            
+            // Findings
+            if (data.findings && data.findings.length === 0) {
+                html += `<div class="normal">✅ No significant pathological findings detected</div>`;
+            } else if (data.findings && data.findings.length > 0) {
+                html += `<h4 style="color: #e53e3e; margin-bottom: 15px;">
+                    🩺 Detected Findings (${data.findings.length})
+                </h4>`;
                 
                 data.findings.forEach(finding => {
+                    const priorityClass = finding.clinical_significance?.startsWith('HIGH') ? 'high-priority' :
+                                        finding.clinical_significance?.startsWith('MODERATE') ? 'moderate-priority' :
+                                        'low-priority';
+                    
+                    const severityClass = finding.severity?.toLowerCase() || 'moderate';
+                    
                     html += `
-                        <div class="finding">
+                        <div class="finding ${priorityClass}">
                             <div class="finding-name">${finding.condition}</div>
-                            <span class="confidence">${finding.confidence}</span>
-                            <span style="margin-left: 10px; color: #666;">Severity: ${finding.severity}</span>
+                            <div class="finding-details">
+                                <span class="confidence">${finding.confidence}</span>
+                                <span class="severity ${severityClass}">${finding.severity || 'Moderate'}</span>
+                            </div>
+                            ${finding.clinical_significance ? 
+                                `<div class="clinical-significance">${finding.clinical_significance}</div>` : 
+                                ''}
                         </div>
                     `;
                 });
             }
             
-            html += `
-                <div style="margin-top: 20px; padding: 15px; background: #f7fafc; border-radius: 8px;">
-                    <strong>Top 3 Conditions Checked:</strong>
-                    <ul style="margin-top: 10px; list-style: none;">
-            `;
+            // Top conditions
+            if (data.top_conditions && data.top_conditions.length > 0) {
+                html += `
+                    <div style="margin-top: 20px; padding: 15px; background: #f7fafc; border-radius: 8px;">
+                        <strong>Top Conditions Evaluated:</strong>
+                        <ul style="margin-top: 10px; list-style: none;">
+                `;
+                
+                data.top_conditions.forEach(condition => {
+                    html += `<li style="margin-bottom: 5px;">• ${condition.condition}: ${condition.confidence}</li>`;
+                });
+                
+                html += `</ul></div>`;
+            }
             
-            data.top_conditions.forEach(condition => {
-                html += `<li style="margin-bottom: 5px;">• ${condition.condition}: ${condition.confidence}</li>`;
-            });
+            // Recommendations
+            if (data.recommendations && data.recommendations.length > 0) {
+                html += `
+                    <div class="recommendations">
+                        <h4>Medical Recommendations:</h4>
+                        <ul>
+                `;
+                
+                data.recommendations.forEach(rec => {
+                    html += `<li>${rec}</li>`;
+                });
+                
+                html += `</ul></div>`;
+            }
             
-            html += `
-                    </ul>
-                </div>
-                <div style="margin-top: 15px; padding: 10px; background: #edf2f7; border-radius: 8px;">
-                    <strong>Recommendation:</strong> ${data.recommendation}
-                </div>
-                <button class="button" onclick="location.reload()">Analyze Another X-Ray</button>
-            `;
+            // Processing notes
+            if (data.processing_notes && data.processing_notes.length > 0) {
+                html += `
+                    <div class="processing-notes">
+                        <strong>Processing Details:</strong><br>
+                        ${data.processing_notes.map(note => `• ${note}`).join('<br>')}
+                    </div>
+                `;
+            }
+            
+            html += `<button class="button" onclick="location.reload()">Analyze Another File</button>`;
             
             resultsContent.innerHTML = html;
             previewSection.classList.add('active');
         }
+        
+        function displayDicomMetadata(metadata) {
+            metadataSection.style.display = 'block';
+            
+            const relevantFields = [
+                { label: 'Patient ID', key: 'patient_id' },
+                { label: 'Study Date', key: 'study_date' },
+                { label: 'Modality', key: 'modality' },
+                { label: 'Manufacturer', key: 'manufacturer' },
+                { label: 'Image Size', key: 'image_dimensions' },
+                { label: 'Bit Depth', key: 'bits_allocated' },
+                { label: 'Photometric', key: 'photometric_interpretation' },
+                { label: 'Window Center', key: 'window_center' },
+                { label: 'Window Width', key: 'window_width' },
+                { label: 'kVp', key: 'kvp' },
+                { label: 'Exposure Time', key: 'exposure_time' },
+                { label: 'View Position', key: 'view_position' }
+            ];
+            
+            let metadataHtml = '';
+            relevantFields.forEach(field => {
+                let value = metadata[field.key];
+                if (value !== null && value !== undefined && value !== 'Unknown') {
+                    if (Array.isArray(value)) {
+                        value = `${value[0]}x${value[1]}`;
+                    }
+                    metadataHtml += `
+                        <div class="metadata-label">${field.label}:</div>
+                        <div class="metadata-value">${value}</div>
+                    `;
+                }
+            });
+            
+            metadataGrid.innerHTML = metadataHtml;
+        }
+        
+        // Database functionality
+        async function loadDatabaseView() {
+            try {
+                // Load statistics
+                const statsResponse = await fetch('http://localhost:8000/database/statistics');
+                if (statsResponse.ok) {
+                    const stats = await statsResponse.json();
+                    displayDatabaseStats(stats);
+                }
+                
+                // Load recent analyses
+                loadAnalyses('recent');
+                
+            } catch (error) {
+                console.error('Error loading database view:', error);
+                databaseStats.innerHTML = '<p style="text-align: center; color: #e53e3e;">Database connection error</p>';
+            }
+        }
+        
+        function displayDatabaseStats(stats) {
+            const total = stats.total_analyses || 0;
+            const fileTypes = stats.file_types || {};
+            
+            databaseStats.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${total}</div>
+                    <div class="stat-label">Total Analyses</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${fileTypes.DICOM || 0}</div>
+                    <div class="stat-label">DICOM Studies</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${fileTypes.Image || 0}</div>
+                    <div class="stat-label">Image Studies</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.common_findings ? stats.common_findings.length : 0}</div>
+                    <div class="stat-label">Unique Findings</div>
+                </div>
+            `;
+        }
+        
+        async function loadAnalyses(viewType) {
+            try {
+                let url = 'http://localhost:8000/database/recent?limit=20';
+                
+                if (viewType === 'dicom') {
+                    url = 'http://localhost:8000/database/search?file_type=DICOM';
+                } else if (viewType === 'findings') {
+                    url = 'http://localhost:8000/database/search?has_findings=true';
+                }
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Failed to load analyses');
+                
+                const data = await response.json();
+                displayAnalyses(data.analyses || []);
+                
+            } catch (error) {
+                console.error('Error loading analyses:', error);
+                analysesList.innerHTML = '<p style="text-align: center; color: #e53e3e;">Failed to load analyses</p>';
+            }
+        }
+        
+        function displayAnalyses(analyses) {
+            if (analyses.length === 0) {
+                analysesList.innerHTML = '<p style="text-align: center; color: #666;">No analyses found</p>';
+                return;
+            }
+            
+            const html = analyses.map(analysis => {
+                const date = new Date(analysis.created_at).toLocaleString();
+                const findings = analysis.findings || [];
+                const hasFindings = findings.length > 0;
+                
+                return `
+                    <div class="analysis-item" onclick="viewAnalysisDetails(${analysis.id})">
+                        <div class="analysis-header">
+                            <span class="analysis-id">Analysis #${analysis.id}</span>
+                            <span class="analysis-date">${date}</span>
+                        </div>
+                        <div style="margin-bottom: 8px;">
+                            <span class="analysis-type ${analysis.file_type?.toLowerCase()}">${analysis.file_type}</span>
+                            ${analysis.patient_id ? `<span style="margin-left: 10px; font-size: 0.8em; color: #666;">Patient: ${analysis.patient_id}</span>` : ''}
+                        </div>
+                        <div class="analysis-summary">
+                            ${analysis.medical_summary || 'No summary available'}
+                        </div>
+                        <div class="analysis-findings">
+                            ${hasFindings ? 
+                                findings.slice(0, 3).map(f => `<span class="finding-badge">${f.condition}</span>`).join('') :
+                                '<span class="finding-badge normal">Normal</span>'
+                            }
+                            ${findings.length > 3 ? `<span class="finding-badge">+${findings.length - 3} more</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            analysesList.innerHTML = html;
+        }
+        
+        async function viewAnalysisDetails(analysisId) {
+            try {
+                const response = await fetch(`http://localhost:8000/database/analysis/${analysisId}`);
+                if (!response.ok) throw new Error('Analysis not found');
+                
+                const analysis = await response.json();
+                
+                // Switch to results view and display the analysis
+                currentFormat = 'dicom'; // Set appropriate format
+                updateUploadArea();
+                
+                // Display the stored analysis results
+                displayResults(analysis, analysis.file_type === 'DICOM');
+                
+                if (analysis.image_preview) {
+                    previewImage.src = analysis.image_preview;
+                } else {
+                    // If no image preview, show placeholder or hide image section
+                    previewImage.style.display = 'none';
+                }
+                
+            } catch (error) {
+                console.error('Error loading analysis details:', error);
+                alert('Failed to load analysis details');
+            }
+        }
+        
+        // Database controls event listeners
+        document.querySelectorAll('.db-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const viewType = button.getAttribute('data-view');
+                
+                // Update active button
+                document.querySelectorAll('.db-button').forEach(b => b.classList.remove('active'));
+                button.classList.add('active');
+                
+                if (viewType === 'refresh') {
+                    loadDatabaseView();
+                } else {
+                    loadAnalyses(viewType);
+                }
+            });
+        });
+        
+        // Initialize
+        updateUploadArea();
     </script>
 </body>
 </html>
