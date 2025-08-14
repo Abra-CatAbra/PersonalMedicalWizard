@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chest X-Ray Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: #f8f9ff;
+        }
+        
+        .upload-area.dragover {
+            background: #e8eaff;
+            border-color: #4c51bf;
+        }
+        
+        .upload-icon {
+            font-size: 60px;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .upload-text {
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        
+        .upload-subtext {
+            color: #999;
+            font-size: 0.9em;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .preview-section {
+            display: none;
+            margin-top: 30px;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        .preview-section.active {
+            display: grid;
+        }
+        
+        .image-preview {
+            text-align: center;
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .results {
+            background: #f8f9ff;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        
+        .result-title {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .finding {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .finding-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .confidence {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+        
+        .normal {
+            background: #48bb78;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+        }
+        
+        .warning {
+            background: #fff5f5;
+            border: 1px solid #feb2b2;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+        
+        .button:hover {
+            background: #5a67d8;
+        }
+        
+        @media (max-width: 768px) {
+            .preview-section {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🫁 AI Chest X-Ray Analyzer</h1>
+            <p class="subtitle">Upload an X-ray image for instant AI-powered analysis</p>
+        </div>
+        
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📤</div>
+            <div class="upload-text">Drop your X-ray image here</div>
+            <div class="upload-subtext">or click to browse (PNG, JPG, JPEG)</div>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing your X-ray image...</p>
+        </div>
+        
+        <div class="preview-section" id="previewSection">
+            <div class="image-preview">
+                <h3 style="margin-bottom: 15px;">Uploaded X-Ray</h3>
+                <img id="previewImage" class="preview-image" alt="X-ray preview">
+            </div>
+            
+            <div class="results" id="results">
+                <div class="result-title">Analysis Results</div>
+                <div id="resultsContent"></div>
+            </div>
+        </div>
+        
+        <div class="warning">
+            ⚠️ <strong>Important:</strong> This is a prototype AI tool for educational purposes. Always consult with qualified healthcare professionals for medical advice.
+        </div>
+    </div>
+    
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const previewSection = document.getElementById('previewSection');
+        const previewImage = document.getElementById('previewImage');
+        const loading = document.getElementById('loading');
+        const resultsContent = document.getElementById('resultsContent');
+        
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+        
+        async function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Please upload an image file');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+            
+            loading.style.display = 'block';
+            previewSection.classList.remove('active');
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('http://localhost:8000/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Analysis failed');
+                }
+                
+                const data = await response.json();
+                displayResults(data);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to analyze image. Please make sure the backend server is running.');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        
+        function displayResults(data) {
+            let html = '';
+            
+            if (data.findings.length === 0) {
+                html += `<div class="normal">✅ ${data.summary}</div>`;
+            } else {
+                html += `<div style="margin-bottom: 15px; color: #e53e3e; font-weight: 600;">
+                    ⚠️ ${data.summary}
+                </div>`;
+                
+                data.findings.forEach(finding => {
+                    html += `
+                        <div class="finding">
+                            <div class="finding-name">${finding.condition}</div>
+                            <span class="confidence">${finding.confidence}</span>
+                            <span style="margin-left: 10px; color: #666;">Severity: ${finding.severity}</span>
+                        </div>
+                    `;
+                });
+            }
+            
+            html += `
+                <div style="margin-top: 20px; padding: 15px; background: #f7fafc; border-radius: 8px;">
+                    <strong>Top 3 Conditions Checked:</strong>
+                    <ul style="margin-top: 10px; list-style: none;">
+            `;
+            
+            data.top_conditions.forEach(condition => {
+                html += `<li style="margin-bottom: 5px;">• ${condition.condition}: ${condition.confidence}</li>`;
+            });
+            
+            html += `
+                    </ul>
+                </div>
+                <div style="margin-top: 15px; padding: 10px; background: #edf2f7; border-radius: 8px;">
+                    <strong>Recommendation:</strong> ${data.recommendation}
+                </div>
+                <button class="button" onclick="location.reload()">Analyze Another X-Ray</button>
+            `;
+            
+            resultsContent.innerHTML = html;
+            previewSection.classList.add('active');
+        }
+    </script>
+</body>
+</html>
